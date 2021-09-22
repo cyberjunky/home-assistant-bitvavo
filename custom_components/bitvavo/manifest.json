@@ -5,6 +5,6 @@
     "documentation": "https://www.home-assistant.io/integrations/bitvavo",
     "requirements": ["bitvavo-aio==1.0.3"],
     "codeowners": ["@cyberjunky"],
-    "version": '0.1.0',
+    "version": "1.0.1",
     "iot_class": "cloud_polling"
 }
