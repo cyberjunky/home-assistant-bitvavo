@@ -2,7 +2,7 @@
     "domain": "bitvavo",
     "name": "Bitvavo",
     "config_flow": true,
-    "documentation": "https://www.home-assistant.io/integrations/bitvavo",
+    "documentation": "https://github.com/cyberjunky/home-assistant-bitvavo",
     "requirements": ["bitvavo-aio==1.0.3"],
     "codeowners": ["@cyberjunky"],
     "version": "1.0.1",
