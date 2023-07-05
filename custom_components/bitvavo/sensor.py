@@ -1,7 +1,7 @@
 """Sensor for the Bitvavo integration."""
 import logging
 
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import SensorEntity, SensorStateClass, SensorDeviceClass
 from homeassistant.const import ATTR_ATTRIBUTION
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -57,6 +57,9 @@ class Ticker(CoordinatorEntity, SensorEntity):
         self._attr_name = f"Bitvavo Ticker - {self._symbol}"
         self._attr_unit_of_measurement = self._get_data_property("quote")
         self._attr_unique_id = f"bitvavo_ticker_{self._symbol})"
+        """ added state_class/device_class """
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_device_class = SensorDeviceClass.ENUM
         self._attr_extra_state_attributes = {
             "symbol": self._symbol,
             "bid_price": self._get_data_property("bid"),
@@ -92,6 +95,9 @@ class Balance(CoordinatorEntity, SensorEntity):
         self._attr_name = f"Bitvavo Balance - {self._balance}"
         self._attr_unit_of_measurement = self._get_data_property("symbol")
         self._attr_unique_id = f"bitvavo_balance_{self._balance})"
+        """ added state_class/device_class """
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_device_class = SensorDeviceClass.ENUM
         self._attr_extra_state_attributes = {
             "available": self._get_data_property("available"),
             "in order": self._get_data_property("inOrder"),
@@ -160,6 +166,9 @@ class TotalAssetValue(CoordinatorEntity, SensorEntity):
         self._attr_icon = CURRENCY_ICONS.get(self._currency, DEFAULT_COIN_ICON)
         self._attr_name = f"Bitvavo Total Asset Value - {self._currency.upper()}"
         self._attr_unit_of_measurement = self._currency
+        """ added state_class/device_class """
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_device_class = SensorDeviceClass.ENUM
         self._attr_unique_id = f"bitvavo_total_asset_value_{self._currency.lower()}"
         self._attr_extra_state_attributes = {
             "note": f"Value is based on the last {self._currency}-{ASSET_VALUE_BASE} price of all coins in balance",
