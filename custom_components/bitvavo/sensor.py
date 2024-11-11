@@ -101,9 +101,6 @@ class Balance(CoordinatorEntity, SensorEntity):
         self._attr_extra_state_attributes = {
             "available": self._get_data_property("available"),
             "in order": self._get_data_property("inOrder"),
-            f"{ASSET_VALUE_BASE}_value".lower(): float(
-                self._get_data_property("asset_value_in_base_asset")
-            ),
             ATTR_ATTRIBUTION: ATTRIBUTION,
         }
 
