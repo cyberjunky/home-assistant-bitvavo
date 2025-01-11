@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import asyncio
 
 from bitvavo.BitvavoClient import BitvavoClient
 from bitvavo.BitvavoExceptions import BitvavoException
@@ -32,9 +33,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     api_secret = entry.data[CONF_API_SECRET]
     markets = entry.data[CONF_MARKETS]
     show_empty_assets = entry.options.get(CONF_SHOW_EMPTY_ASSETS, True)
+    loop = asyncio.get_event_loop()
 
     try:
-        client = BitvavoClient(api_key, api_secret)
+        client = await loop.run_in_executor(None, BitvavoClient,api_key, api_secret)
     except BitvavoException as error:
         _LOGGER.error("Bitvavo API error: %s", error)
         raise ConfigEntryNotReady from error
@@ -44,9 +46,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = coordinator
-    
+
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    
 
     return True
 

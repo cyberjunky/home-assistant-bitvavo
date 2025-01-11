@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import logging
+import asyncio
+
 from typing import Any
 
 from bitvavo.BitvavoClient import BitvavoClient
@@ -47,15 +49,18 @@ async def validate_input(hass: HomeAssistant, data: dict) -> dict[str, Any]:
     api_key = data[CONF_API_KEY]
     api_secret = data[CONF_API_SECRET]
 
-    try:
-        client = BitvavoClient(api_key, api_secret)
+    loop = asyncio.get_event_loop()
 
-        markets = await client.get_price_ticker()
+    try:
+        # Run the blocking client initialization and method calls in an executor
+        client = await loop.run_in_executor(None, BitvavoClient, api_key, api_secret)
+
+        markets = await loop.run_in_executor(None, client.get_price_ticker)
         for market in markets:
             markets_list.append(market["market"])
         markets_list.sort()
 
-        balances = await client.get_balance()
+        balances = await loop.run_in_executor(None, client.get_balance)
         for balance in balances:
             balances_list.append(balance["symbol"])
         balances_list.sort()
@@ -64,7 +69,7 @@ async def validate_input(hass: HomeAssistant, data: dict) -> dict[str, Any]:
             raise InvalidAuth from error
         raise InvalidResponse from error
     finally:
-        await client.close()
+        await loop.run_in_executor(None, client.close)
 
     return {"markets": markets_list, "balances": balances_list}
 
