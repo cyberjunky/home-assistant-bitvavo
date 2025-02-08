@@ -54,13 +54,13 @@ async def validate_input(hass: HomeAssistant, data: dict) -> dict[str, Any]:
     try:
         # Run the blocking client initialization and method calls in an executor
         client = await loop.run_in_executor(None, BitvavoClient, api_key, api_secret)
+        markets = await client.get_price_ticker()
 
-        markets = await loop.run_in_executor(None, client.get_price_ticker)
         for market in markets:
             markets_list.append(market["market"])
         markets_list.sort()
 
-        balances = await loop.run_in_executor(None, client.get_balance)
+        balances = await client.get_balance()
         for balance in balances:
             balances_list.append(balance["symbol"])
         balances_list.sort()
@@ -69,7 +69,7 @@ async def validate_input(hass: HomeAssistant, data: dict) -> dict[str, Any]:
             raise InvalidAuth from error
         raise InvalidResponse from error
     finally:
-        await loop.run_in_executor(None, client.close)
+        await client.close()
 
     return {"markets": markets_list, "balances": balances_list}
 
