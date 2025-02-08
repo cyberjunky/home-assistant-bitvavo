@@ -21,12 +21,12 @@ CURRENCY_ICONS = {
     "ETH": "mdi:currency-eth",
     "EUR": "mdi:currency-eur",
     "LTC": "mdi:litecoin",
-    "USD": "mdi:currency-usd",
+    "USDC": "mdi:currency-usd",
 }
 
 DEFAULT_COIN_ICON = "mdi:currency-usd"
 
-ASSET_VALUE_CURRENCIES = {"USDT", "EUR", "BTC"}
+ASSET_VALUE_CURRENCIES = {"USDC", "EUR", "BTC"}
 ASSET_VALUE_BASE = "EUR"
 ATTRIBUTION = "Bitvavo.com"
 
