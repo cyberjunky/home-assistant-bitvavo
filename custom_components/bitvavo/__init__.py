@@ -87,13 +87,13 @@ class BitvavoDataUpdateCoordinator(DataUpdateCoordinator):
             if market not in tickers_dict:
                 tickers_dict[market] = {}
                 ticker_details = next(
-                    item for item in tickers if item["market"] == market
+                    (item for item in tickers if item["market"] == market),{}
                 )
                 market_details = next(
-                    item for item in markets if item["market"] == market
+                    (item for item in markets if item["market"] == market),{}
                 )
                 orderbook_ticker_details = next(
-                    item for item in orderbook_tickers if item["market"] == market
+                    (item for item in orderbook_tickers if item["market"] == market),{}
                 )
                 combined_details_dict = {
                     **ticker_details,
@@ -118,7 +118,8 @@ class BitvavoDataUpdateCoordinator(DataUpdateCoordinator):
                 if currency not in asset_tickers_dict:
                     asset_tickers_dict[currency] = {}
                     ticker_details = next(
-                        item for item in tickers if item["market"] == currency
+                        (item for item in tickers if item["market"] == currency),
+                        {}
                     )
                     asset_tickers_dict[currency].update(ticker_details)
 
