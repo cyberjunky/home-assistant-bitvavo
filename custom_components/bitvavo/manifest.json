@@ -5,6 +5,6 @@
     "documentation": "https://github.com/cyberjunky/home-assistant-bitvavo",
     "requirements": ["bitvavo-aio==1.0.3"],
     "codeowners": ["@cyberjunky"],
-    "version": "1.0.4",
+    "version": "1.0.6",
     "iot_class": "cloud_polling"
 }
