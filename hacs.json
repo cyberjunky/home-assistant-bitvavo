@@ -1,6 +1,6 @@
 {
     "name": "Bitvavo",
-    "country": "NL",
     "render_readme": true,
-    "domains": ["sensor"]
-} 
+    "homeassistant": "2025.1.4",
+    "hacs": "1.34.0"
+}
