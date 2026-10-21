@@ -1,5 +1,6 @@
 """Sensor for the Bitvavo integration."""
 import logging
+from decimal import Decimal, InvalidOperation
 
 from homeassistant.components.sensor import SensorEntity, SensorStateClass, SensorDeviceClass
 from homeassistant.const import ATTR_ATTRIBUTION
@@ -59,7 +60,6 @@ class Ticker(CoordinatorEntity, SensorEntity):
         self._attr_unique_id = f"bitvavo_ticker_{self._symbol})"
         """ added state_class/device_class """
         self._attr_state_class = SensorStateClass.MEASUREMENT
-        self._attr_device_class = SensorDeviceClass.ENUM
         self._attr_extra_state_attributes = {
             "symbol": self._symbol,
             "bid_price": self._get_data_property("bid"),
@@ -76,9 +76,22 @@ class Ticker(CoordinatorEntity, SensorEntity):
         return self.coordinator.data[CONF_TICKERS][self._symbol][property_name]
 
     @property
+    def suggested_display_precision(self):
+        """Determine display precision from Bitvavo tickSize."""
+        tick_size = self.coordinator.data[CONF_TICKERS][self._symbol].get("tickSize")
+
+        try:
+            size = Decimal(str(tick_size))
+            if not size.is_finite() or size <= 0:
+                return 4
+            return max(0, -size.normalize().as_tuple().exponent)
+        except (InvalidOperation, TypeError, ValueError):
+            return 4
+
+    @property
     def state(self):
-        """Return the state of the sensor."""
-        return round(float(self._get_data_property("price")), 4)
+        """Return the ticker price without rounding."""
+        return float(self._get_data_property("price"))
 
 
 class Balance(CoordinatorEntity, SensorEntity):
