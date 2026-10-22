@@ -1,38 +1,87 @@
 {
-    "config": {
-        "abort": {
-            "single_instance_allowed": "Already configured. Only a single configuration possible.",
-            "unknown": "Unexpected error"
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Bitvavo",
+        "description": "This integration requires an API key from Bitvavo with 'View' (read-only) permission. It never trades or withdraws.",
+        "data": {
+          "api_key": "API key",
+          "api_secret": "API secret"
         },
-        "error": {
-            "invalid_auth": "Invalid authentication",
-            "invalid_market": "Invalid market(s)"
-        },
-        "step": {
-            "markets": {
-                "data": {
-                    "markets": "markets"
-                },
-                "description": "Select the markets that you would like to track.",
-                "title": "Select the cryptocurrency markets"
-            },
-            "user": {
-                "data": {
-                    "api_key": "API Key",
-                    "api_secret": "API Secret"
-                },
-                "description": "This integration requires an API Key from Bitvavo with at least 'Read' permissions.",
-                "title": "Connect to Bitvavo"
-            }
+        "data_description": {
+          "api_key": "Create an API key in the Bitvavo dashboard under Settings > API.",
+          "api_secret": "The secret shown once when the API key was created."
         }
+      },
+      "markets": {
+        "title": "Select the cryptocurrency markets",
+        "description": "Select the markets that you would like to track.",
+        "data": {
+          "markets": "Markets"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Authentication expired for {name}",
+        "description": "Bitvavo rejected the API key. Enter a new API key and secret with 'View' permission.",
+        "data": {
+          "api_key": "API key",
+          "api_secret": "API secret"
+        }
+      },
+      "reconfigure": {
+        "title": "Select the cryptocurrency markets",
+        "description": "Select the markets that you would like to track.",
+        "data": {
+          "markets": "Markets"
+        }
+      }
     },
-    "options": {
-        "step": {
-            "init": {
-                "data": {
-                    "show_empty_assets": "Show assets with zero value"
-                }
-            }
-        }
+    "error": {
+      "cannot_connect": "Failed to connect",
+      "invalid_auth": "Invalid authentication",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "single_instance_allowed": "Already configured. Only a single configuration is possible.",
+      "reauth_successful": "Re-authentication was successful",
+      "reconfigure_successful": "Reconfiguration was successful",
+      "cannot_connect": "Failed to connect",
+      "invalid_auth": "Invalid authentication",
+      "unknown": "Unexpected error"
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "show_empty_assets": "Show assets with zero value"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "ticker": {
+        "name": "Ticker - {market}"
+      },
+      "change_24h": {
+        "name": "Change 24h - {market}"
+      },
+      "balance": {
+        "name": "Balance - {symbol}"
+      },
+      "open_orders": {
+        "name": "Open Orders"
+      },
+      "total_asset_value": {
+        "name": "Total Asset Value - {currency}"
+      },
+      "maker_fee": {
+        "name": "Maker fee"
+      },
+      "taker_fee": {
+        "name": "Taker fee"
+      }
+    }
+  }
 }

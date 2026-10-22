@@ -1,0 +1,30 @@
+ # Ruff configuration (top-level keys expected in ruff.toml)
+fix = true
+"line-length" = 100
+"target-version" = "py312"
+
+[lint]
+select = [
+    "ASYNC",
+    "B",
+    "C4",
+    "C90",
+    "E",
+    "F",
+    "I",
+    "ISC",
+    "RUF",
+    "UP",
+    "W",
+]
+ignore = [
+    "E501",   # Line too long (handled by formatter)
+    "UP040",  # Unnecessary class parentheses
+]
+
+[lint.mccabe]
+max-complexity = 25
+
+[lint.isort]
+# The bitvavo-aio library package shares its name with the integration folder
+known-third-party = ["bitvavo"]

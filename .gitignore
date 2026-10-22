@@ -1,3 +1,8 @@
+# Custom
+config/*
+!config/configuration.yaml
+.devcontainer-lock.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
