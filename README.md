@@ -22,6 +22,10 @@ A Home Assistant custom integration that exposes your [Bitvavo](https://bitvavo.
 - **Re-authentication & reconfiguration**: replace a revoked API key or change the tracked markets without losing history
 - **Diagnostics**: download diagnostics with your keys and amounts redacted
 
+Screenshot
+
+![alt text](screenshots/image.png)
+
 ## Sensors
 
 | Sensor | Description | Unit |
