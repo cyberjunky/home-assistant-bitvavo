@@ -41,6 +41,17 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     if CONF_OPEN_ORDERS in coordinator.data:
         entities.append(OpenOrders(coordinator, coordinator.data[CONF_OPEN_ORDERS]))
 
+    # Register all Bitvavo entities under one device
+    device_info = {
+        "identifiers": {(DOMAIN, config_entry.entry_id)},
+        "name": "Bitvavo",
+        "manufacturer": "Bitvavo",
+        "model": "Crypto Exchange",
+    }
+
+    for entity in entities:
+        entity._attr_device_info = device_info
+
     async_add_entities(entities)
 
 
