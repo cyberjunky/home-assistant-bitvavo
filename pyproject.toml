@@ -1,0 +1,40 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+check_untyped_defs = true
+warn_return_any = true
+warn_unused_ignores = true
+show_error_codes = true
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4"]
+ignore = ["E501"]
+
+[tool.coverage.run]
+source = ["custom_components"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]
+
+[tool.ruff.lint.isort]
+known-third-party = ["bitvavo"]
+
+[[tool.mypy.overrides]]
+# Home Assistant 2026.10+ types flow schemas as probatio (a voluptuous compatible fork),
+# voluptuous is kept so the integration still works on older Home Assistant versions.
+module = ["custom_components.bitvavo.config_flow", "bitvavo.config_flow"]
+disable_error_code = ["arg-type"]

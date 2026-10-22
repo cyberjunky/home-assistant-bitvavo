@@ -1,102 +1,103 @@
 """Config flow for the Bitvavo integration."""
+
 from __future__ import annotations
 
 import logging
-import asyncio
-
+from collections.abc import Mapping
 from typing import Any
 
-from bitvavo.BitvavoClient import BitvavoClient
-from bitvavo.BitvavoExceptions import BitvavoException
 import voluptuous as vol
-
-from homeassistant.config_entries import ConfigFlow, OptionsFlow
+from bitvavo.BitvavoClient import BitvavoClient
+from bitvavo.BitvavoExceptions import BitvavoAuthError, BitvavoException
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.const import CONF_API_KEY
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.data_entry_flow import FlowResult
-from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers.typing import ConfigType
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.selector import (
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
+    TextSelector,
+    TextSelectorConfig,
+    TextSelectorType,
+)
 
-from .const import CONF_API_SECRET, CONF_MARKETS, CONF_SHOW_EMPTY_ASSETS, DOMAIN
-from .errors import InvalidAuth, InvalidResponse
+from .const import CONF_API_SECRET, CONF_MARKETS, CONF_SHOW_EMPTY_ASSETS, DOMAIN, REQUEST_TIMEOUT
+from .coordinator import BitvavoConfigEntry
+from .errors import CannotConnect, InvalidAuth
 
 _LOGGER = logging.getLogger(__name__)
 
 DATA_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_API_KEY): str,
-        vol.Required(CONF_API_SECRET): str,
+        vol.Required(CONF_API_KEY): TextSelector(),
+        vol.Required(CONF_API_SECRET): TextSelector(
+            TextSelectorConfig(type=TextSelectorType.PASSWORD)
+        ),
     }
 )
 
 
-def _markets_schema(markets: list | None) -> dict[str, Any]:
+def _markets_schema(markets: list[str] | None, default: list[str] | None = None) -> vol.Schema:
     """Markets selection schema."""
-    markets_dict = {}
+    return vol.Schema(
+        {
+            vol.Required(CONF_MARKETS, default=default or []): SelectSelector(
+                SelectSelectorConfig(
+                    options=markets or [],
+                    multiple=True,
+                    mode=SelectSelectorMode.DROPDOWN,
+                    sort=True,
+                )
+            )
+        }
+    )
 
-    if markets:
-        markets_dict = {name: name for name in markets}
 
-    return vol.Schema({vol.Required(CONF_MARKETS): cv.multi_select(markets_dict)})
-
-
-async def validate_input(hass: HomeAssistant, data: dict) -> dict[str, Any]:
-    """Get markets and balance data."""
-
-    markets_list = []
-    balances_list = []
-
-    api_key = data[CONF_API_KEY]
-    api_secret = data[CONF_API_SECRET]
-
-    loop = asyncio.get_event_loop()
+async def validate_input(hass: HomeAssistant, data: Mapping[str, Any]) -> dict[str, Any]:
+    """Validate the API key and get the available markets and balances."""
+    client = BitvavoClient(
+        data[CONF_API_KEY],
+        data[CONF_API_SECRET],
+        session=async_get_clientsession(hass),
+        timeout=REQUEST_TIMEOUT,
+    )
 
     try:
-        # Run the blocking client initialization and method calls in an executor
-        client = await loop.run_in_executor(None, BitvavoClient, api_key, api_secret)
-        markets = await client.get_price_ticker()
-
-        for market in markets:
-            markets_list.append(market["market"])
-        markets_list.sort()
-
+        # A signed call validates the key and its View permission
         balances = await client.get_balance()
-        for balance in balances:
-            balances_list.append(balance["symbol"])
-        balances_list.sort()
+        markets = await client.get_price_ticker()
+    except BitvavoAuthError as error:
+        raise InvalidAuth from error
     except BitvavoException as error:
-        if str(error.status_code) == "403":
-            raise InvalidAuth from error
-        raise InvalidResponse from error
-    finally:
-        await client.close()
+        raise CannotConnect from error
 
-    return {"markets": markets_list, "balances": balances_list}
+    return {
+        "markets": sorted(market["market"] for market in markets),
+        "balances": sorted(balance["symbol"] for balance in balances),
+    }
 
 
 class BitvavoConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Bitvavo."""
 
     VERSION = 1
+    MINOR_VERSION = 2
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the Bitvavo config flow."""
-        self.bitvavo_config = {}
-        self.markets = None
-        self.balances = None
+        self.bitvavo_config: dict[str, Any] = {}
+        self.markets: list[str] | None = None
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry):
+    def async_get_options_flow(config_entry: BitvavoConfigEntry) -> BitvavoOptionsFlowHandler:
         """Get the options flow for this handler."""
-        return BitvavoOptionsFlowHandler(config_entry)
+        return BitvavoOptionsFlowHandler()
 
-    async def async_step_user(self, user_input: ConfigType | None = None) -> FlowResult:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle a flow initiated by the user."""
-        if self._async_current_entries():
-            return self.async_abort(reason="single_instance_allowed")
-
-        errors = {}
+        errors: dict[str, str] = {}
 
         if user_input is not None:
             info, errors = await self._async_validate_or_error(user_input)
@@ -108,38 +109,89 @@ class BitvavoConfigFlow(ConfigFlow, domain=DOMAIN):
                 return await self.async_step_markets()
 
         return self.async_show_form(
-            step_id="user", data_schema=DATA_SCHEMA, errors=errors
+            step_id="user",
+            data_schema=self.add_suggested_values_to_schema(DATA_SCHEMA, user_input),
+            errors=errors,
         )
 
-    async def async_step_markets(self, user_input: dict | None = None) -> FlowResult:
+    async def async_step_markets(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         """Handle the picking of the markets."""
-        errors = {}
-
         if user_input is not None:
             self.bitvavo_config.update(user_input)
-            info, errors = await self._async_validate_or_error(self.bitvavo_config)
-
-            title = "Markets: " + ", ".join(self.bitvavo_config[CONF_MARKETS])
-
-            if not errors:
-                self.balances = info["balances"]
-                return self.async_create_entry(title=title, data=self.bitvavo_config)
+            return self.async_create_entry(title="Bitvavo", data=self.bitvavo_config)
 
         return self.async_show_form(
             step_id="markets",
             data_schema=_markets_schema(self.markets),
+        )
+
+    async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> ConfigFlowResult:
+        """Handle a rejected API key."""
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Ask for a new API key and secret."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            _, errors = await self._async_validate_or_error(user_input)
+            if not errors:
+                return self.async_update_reload_and_abort(
+                    self._get_reauth_entry(),
+                    data={**self._get_reauth_entry().data, **user_input},
+                )
+
+        return self.async_show_form(
+            step_id="reauth_confirm",
+            data_schema=self.add_suggested_values_to_schema(
+                DATA_SCHEMA,
+                user_input or {CONF_API_KEY: self._get_reauth_entry().data[CONF_API_KEY]},
+            ),
             errors=errors,
         )
 
-    async def _async_validate_or_error(self, config):
-        errors = {}
-        info = {}
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Change the tracked markets."""
+        entry = self._get_reconfigure_entry()
+
+        if user_input is not None:
+            return self.async_update_reload_and_abort(
+                entry,
+                data={**entry.data, CONF_MARKETS: user_input[CONF_MARKETS]},
+            )
+
+        info, errors = await self._async_validate_or_error(entry.data)
+        if errors:
+            return self.async_abort(reason=errors["base"])
+
+        current = list(entry.data.get(CONF_MARKETS, []))
+        # Keep markets that are currently not trading selectable
+        options = sorted(set(info["markets"]) | set(current))
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=_markets_schema(options, current),
+        )
+
+    async def _async_validate_or_error(
+        self, config: Mapping[str, Any]
+    ) -> tuple[dict[str, Any], dict[str, str]]:
+        errors: dict[str, str] = {}
+        info: dict[str, Any] = {}
 
         try:
             info = await validate_input(self.hass, config)
         except InvalidAuth:
             errors["base"] = "invalid_auth"
-        except Exception:  # pylint: disable=broad-except
+        except CannotConnect:
+            errors["base"] = "cannot_connect"
+        except Exception:
             _LOGGER.exception("Unexpected exception")
             errors["base"] = "unknown"
 
@@ -149,11 +201,7 @@ class BitvavoConfigFlow(ConfigFlow, domain=DOMAIN):
 class BitvavoOptionsFlowHandler(OptionsFlow):
     """Handle Bitvavo options."""
 
-    def __init__(self, config_entry):
-        """Initialize options flow."""
-        self.config_entry = config_entry
-
-    async def async_step_init(self, user_input: ConfigType | None = None):
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Manage Bitvavo options."""
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)

@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+set -e
+
+cd "$(dirname "$0")/.."
+
+# Determine the Home Assistant command to use
+if command -v hass &> /dev/null; then
+  HASS_CMD="$(which hass)"
+else
+  HASS_CMD="$(which python3) -m homeassistant"
+fi
+
+if [ ! -f "${PWD}/config/configuration.yaml" ]; then
+  mkdir -p "${PWD}/config"
+  ${HASS_CMD} --config "${PWD}/config" --script ensure_config
+fi
+
+# Make the repo root importable so Home Assistant finds custom_components/bitvavo.
+# Note: do NOT add ${PWD}/custom_components itself, the integration folder would then
+# shadow the "bitvavo" package of the bitvavo-aio library.
+export PYTHONPATH="${PYTHONPATH}:${PWD}"
+
+# Start Home Assistant
+${HASS_CMD} --config "${PWD}/config" --debug

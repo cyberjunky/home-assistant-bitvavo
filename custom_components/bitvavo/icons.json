@@ -1,0 +1,15 @@
+{
+  "entity": {
+    "sensor": {
+      "change_24h": {
+        "default": "mdi:chart-line-variant"
+      },
+      "maker_fee": {
+        "default": "mdi:percent"
+      },
+      "taker_fee": {
+        "default": "mdi:percent"
+      }
+    }
+  }
+}
