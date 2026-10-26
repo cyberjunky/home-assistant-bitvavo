@@ -75,7 +75,7 @@ OPEN_ORDERS = [
         "price": "9",
     },
 ]
-STAKING = [{"symbol": "BTC", "amount": "0.25"}]
+STAKING = [{"symbol": "BTC", "amount": "0.25"}, {"symbol": "ETH", "amount": "2"}]
 ACCOUNT = {"fees": {"taker": "0.0025", "maker": "0.0015", "volume": "1000.00"}}
 
 ENTRY_DATA = {

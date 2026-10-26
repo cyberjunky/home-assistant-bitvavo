@@ -170,15 +170,25 @@ class BitvavoDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             if "symbol" in item
         }
 
+        # Fully staked assets are not returned by /balance, add them from staking
+        known = {balance.get("symbol") for balance in balances}
+        staked_only = [
+            {"symbol": symbol, "available": "0", "inOrder": "0"}
+            for symbol in staked
+            if symbol not in known
+        ]
+
         balances_dict: dict[str, dict[str, Any]] = {}
 
-        for balance in balances:
+        for balance in [*balances, *staked_only]:
             symbol = balance.get("symbol")
             if symbol is None or symbol in balances_dict:
                 continue
 
-            total_balance = (_to_float(balance.get("available")) or 0.0) + (
-                _to_float(balance.get("inOrder")) or 0.0
+            total_balance = (
+                (_to_float(balance.get("available")) or 0.0)
+                + (_to_float(balance.get("inOrder")) or 0.0)
+                + staked.get(symbol, 0.0)
             )
 
             if not show_empty_assets and total_balance == 0.0:

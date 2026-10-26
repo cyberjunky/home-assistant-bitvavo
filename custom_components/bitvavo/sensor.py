@@ -217,8 +217,10 @@ class Balance(BitvavoEntity, SensorEntity):
     @property
     def native_value(self) -> float:
         """Return the state of the sensor."""
-        return (_to_float(self._data.get("available")) or 0.0) + (
-            _to_float(self._data.get("inOrder")) or 0.0
+        return (
+            (_to_float(self._data.get("available")) or 0.0)
+            + (_to_float(self._data.get("inOrder")) or 0.0)
+            + (_to_float(self._data.get("staked")) or 0.0)
         )
 
     @property
