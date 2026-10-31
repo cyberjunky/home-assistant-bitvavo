@@ -65,21 +65,27 @@ async def test_change_24h(hass: HomeAssistant, setup_entry: MockConfigEntry) -> 
 
 async def test_balances(hass: HomeAssistant, setup_entry: MockConfigEntry) -> None:
     btc = hass.states.get("sensor.bitvavo_balance_btc")
-    assert btc.state == "1.0"
+    assert btc.state == "1.25"
     assert btc.attributes["staked"] == 0.25
-    assert btc.attributes["value_eur"] == 50000.0
+    assert btc.attributes["value_eur"] == 62500.0
     assert btc.attributes["in order"] == "0.5"
     assert hass.states.get("sensor.bitvavo_balance_eur").state == "100.0"
     # EURC must not be treated as the EUR base asset (value comes from its own pair)
     assert hass.states.get("sensor.bitvavo_balance_eurc").attributes["value_eur"] == 10.0
+    # Fully staked assets are not returned by /balance but still get a sensor
+    eth = hass.states.get("sensor.bitvavo_balance_eth")
+    assert eth.state == "2.0"
+    assert eth.attributes["available"] == "0"
+    assert eth.attributes["staked"] == 2.0
+    assert eth.attributes["value_eur"] == 4000.0
 
 
 async def test_total_asset_value(hass: HomeAssistant, setup_entry: MockConfigEntry) -> None:
-    # 100 EUR + 1 BTC * 50000 + 10 EURC * 1
-    assert hass.states.get("sensor.bitvavo_total_asset_value_eur").state == "50110.0"
-    assert hass.states.get("sensor.bitvavo_total_asset_value_btc").state == "1.0022"
+    # 100 EUR + 1.25 BTC (incl. 0.25 staked) * 50000 + 2 staked ETH * 2000 + 10 EURC * 1
+    assert hass.states.get("sensor.bitvavo_total_asset_value_eur").state == "66610.0"
+    assert hass.states.get("sensor.bitvavo_total_asset_value_btc").state == "1.3322"
     assert float(hass.states.get("sensor.bitvavo_total_asset_value_usdc").state) == pytest.approx(
-        50110 / 0.9
+        66610 / 0.9
     )
 
 
@@ -102,9 +108,13 @@ async def test_fee_sensors_disabled_by_default(
 async def test_new_balance_added_and_sold_balance_is_zero(
     hass: HomeAssistant,
     mock_client: AsyncMock,
-    setup_entry: MockConfigEntry,
+    config_entry: MockConfigEntry,
     freezer: FrozenDateTimeFactory,
 ) -> None:
+    mock_client.get_staking_balance.return_value = []
+    config_entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
     assert hass.states.get("sensor.bitvavo_balance_eth") is None
 
     # Sold all BTC (Bitvavo no longer returns it) and bought ETH

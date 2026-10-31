@@ -78,6 +78,6 @@ async def test_migrate_unique_ids(
     assert entity_registry.async_get(ticker.entity_id).unique_id == "bitvavo_ticker_BTC-EUR"
     assert entity_registry.async_get(balance.entity_id).unique_id == "bitvavo_balance_BTC"
     # Entity ids are kept and no duplicates were created
-    assert hass.states.get("sensor.my_btc").state == "1.0"
+    assert hass.states.get("sensor.my_btc").state == "1.25"
     assert hass.states.get("sensor.bitvavo_balance_btc") is None
     assert hass.states.get("sensor.bitvavo_ticker_btc_eur").state == "50000.0"
