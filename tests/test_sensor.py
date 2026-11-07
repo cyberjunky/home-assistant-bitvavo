@@ -11,7 +11,7 @@ from freezegun.api import FrozenDateTimeFactory
 from homeassistant.const import ATTR_UNIT_OF_MEASUREMENT, STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
-from pytest_homeassistant_custom_component.common import MockConfigEntry, async_fire_time_changed
+from pytest_homeassistant.common import MockConfigEntry, async_fire_time_changed
 
 from custom_components.bitvavo.const import SCAN_INTERVAL
 

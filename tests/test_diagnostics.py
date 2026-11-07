@@ -5,7 +5,7 @@ from __future__ import annotations
 from unittest.mock import AsyncMock
 
 from homeassistant.core import HomeAssistant
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.bitvavo.diagnostics import async_get_config_entry_diagnostics
 

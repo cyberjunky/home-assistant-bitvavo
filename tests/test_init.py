@@ -8,7 +8,7 @@ from bitvavo.BitvavoExceptions import BitvavoAuthError, BitvavoConnectionError
 from homeassistant.config_entries import SOURCE_REAUTH, ConfigEntryState
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.bitvavo.const import DOMAIN
 
